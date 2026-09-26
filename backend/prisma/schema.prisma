@@ -1,0 +1,241 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum PhotoType {
+  FRONT_FULL_BODY
+  UPPER_BODY
+  LOWER_BODY
+  FEET
+  FACE
+  ADDITIONAL
+}
+
+enum CategoryEnum {
+  TOPS
+  SHIRTS
+  DRESSES
+  JACKETS
+  PANTS
+  SHOES
+  JEWELLERY
+  NECKLACES
+  ACCESSORIES
+  CUSTOM
+}
+
+enum JobStatusEnum {
+  CREATED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum GenerationModeEnum {
+  FAST
+  STANDARD
+  HIGH_QUALITY
+  CONTEXT_AWARE
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  passwordHash    String           @map("password_hash")
+  displayName     String?          @map("display_name")
+  role            UserRole         @default(USER)
+  consentTraining Boolean          @default(false) @map("consent_training")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  deletedAt       DateTime?        @map("deleted_at")
+
+  refreshTokens   RefreshToken[]
+  profiles        DigitalProfile[]
+  tryOnJobs       TryOnJob[]
+  tryOnResults    TryOnResult[]
+  wardrobeItems   WardrobeItem[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model DigitalProfile {
+  id           String         @id @default(uuid())
+  userId       String         @map("user_id")
+  name         String         @default("Default Profile")
+  isDefault    Boolean        @default(true) @map("is_default")
+  measurements Json?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images       ProfileImage[]
+  tryOnJobs    TryOnJob[]
+
+  @@index([userId])
+  @@map("digital_profiles")
+}
+
+model ProfileImage {
+  id             String         @id @default(uuid())
+  profileId      String         @map("profile_id")
+  photoType      PhotoType      @map("photo_type")
+  storageKey     String         @map("storage_key")
+  mimeType       String         @default("image/webp") @map("mime_type")
+  width          Int
+  height         Int
+  fileSizeBytes  Int            @map("file_size_bytes")
+  checksumSha256 String         @map("checksum_sha256")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  profile        DigitalProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("profile_images")
+}
+
+model Product {
+  id                  String           @id @default(uuid())
+  sourceDomain        String           @map("source_domain")
+  sourceUrl           String           @map("source_url")
+  title               String
+  description         String?
+  category            CategoryEnum
+  price               Decimal?         @db.Decimal(10, 2)
+  currency            String?
+  brand               String?
+  detectionConfidence Float            @default(1.0) @map("detection_confidence")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  images              ProductImage[]
+  variants            ProductVariant[]
+  tryOnJobs           TryOnJob[]
+
+  @@index([sourceDomain])
+  @@index([category])
+  @@map("products")
+}
+
+model ProductImage {
+  id              String   @id @default(uuid())
+  productId       String   @map("product_id")
+  imageUrl        String   @map("image_url")
+  localStorageKey String?  @map("local_storage_key")
+  width           Int?
+  height          Int?
+  isPrimary       Boolean  @default(false) @map("is_primary")
+  qualityScore    Float    @default(1.0) @map("quality_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  name        String
+  color       String?
+  size        String?
+  sku         String?
+  price       Decimal? @db.Decimal(10, 2)
+  imageUrl    String?  @map("image_url")
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model TryOnJob {
+  id              String             @id @default(uuid())
+  userId          String             @map("user_id")
+  profileId       String             @map("profile_id")
+  productId       String?            @map("product_id")
+  status          JobStatusEnum      @default(CREATED)
+  generationMode  GenerationModeEnum @default(STANDARD) @map("generation_mode")
+  providerUsed    String?            @map("provider_used")
+  retryCount      Int                @default(0) @map("retry_count")
+  errorCode       String?            @map("error_code")
+  errorMessage    String?            @map("error_message")
+  progressPercent Int                @default(0) @map("progress_percent")
+  currentStage    String?            @map("current_stage")
+  queuedAt        DateTime?          @map("queued_at")
+  startedAt       DateTime?          @map("started_at")
+  completedAt     DateTime?          @map("completed_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile         DigitalProfile     @relation(fields: [profileId], references: [id])
+  product         Product?           @relation(fields: [productId], references: [id])
+  result          TryOnResult?
+
+  @@index([userId])
+  @@index([status])
+  @@map("try_on_jobs")
+}
+
+model TryOnResult {
+  id            String         @id @default(uuid())
+  jobId         String         @unique @map("job_id")
+  userId        String         @map("user_id")
+  storageKey    String         @map("storage_key")
+  mimeType      String         @default("image/webp") @map("mime_type")
+  width         Int
+  height        Int
+  metadata      Json?
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  job           TryOnJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wardrobeItems WardrobeItem[]
+
+  @@index([userId])
+  @@map("try_on_results")
+}
+
+model WardrobeItem {
+  id          String      @id @default(uuid())
+  userId      String      @map("user_id")
+  resultId    String      @map("result_id")
+  customTitle String?     @map("custom_title")
+  tags        Json?
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  result      TryOnResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("wardrobe_items")
+}

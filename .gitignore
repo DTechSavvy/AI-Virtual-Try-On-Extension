@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Extension Distribution Packages
+*.crx
+*.zip
+
+# Environment & Secrets
+.env
+.env.local
+.env.production
+.env.staging
+*.pem
+*.key
+
+# Database & Storage
+data/
+*.sqlite
+*.sqlite3
+minio-data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / Editor Artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test Coverage
+coverage/
+.nyc_output/

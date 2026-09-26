@@ -1,0 +1,16 @@
+export enum ExtensionMessageType {
+  TRIGGER_PRODUCT_DETECTION = 'TRIGGER_PRODUCT_DETECTION',
+  PRODUCT_DETECTION_RESULT = 'PRODUCT_DETECTION_RESULT',
+  TAB_URL_CHANGED = 'TAB_URL_CHANGED',
+  AUTH_STATE_CHANGED = 'AUTH_STATE_CHANGED',
+  START_TRY_ON = 'START_TRY_ON',
+  JOB_STATUS_UPDATE = 'JOB_STATUS_UPDATE',
+  GET_EXTENSION_STATUS = 'GET_EXTENSION_STATUS',
+}
+
+export interface ExtensionMessage<T = unknown> {
+  type: ExtensionMessageType;
+  payload: T;
+  source: 'CONTENT_SCRIPT' | 'SERVICE_WORKER' | 'SIDE_PANEL';
+  timestamp: number;
+}
