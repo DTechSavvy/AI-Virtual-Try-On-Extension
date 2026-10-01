@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Aura Atelier — Silk Evening Gown</title>
+  <meta property="og:title" content="Aura Silk Evening Gown" />
+  <meta property="og:description" content="100% Mulberry silk sleeveless evening gown in emerald green." />
+  <meta property="og:image" content="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&q=80" />
+  <meta property="product:price:amount" content="280.00" />
+  <meta property="product:price:currency" content="USD" />
+  <link rel="canonical" href="https://aura-atelier.example.com/products/silk-evening-gown" />
+  
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "Aura Silk Evening Gown",
+    "image": [
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&q=80",
+      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=1200&q=80"
+    ],
+    "description": "100% Mulberry silk sleeveless evening gown in emerald green.",
+    "brand": {
+      "@type": "Brand",
+      "name": "Aura Atelier"
+    },
+    "sku": "AUR-EVG-001",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "USD",
+      "price": "280.00",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+  </script>
+
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background: #fafafa; color: #111; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .pdp-container { display: flex; gap: 40px; margin-top: 30px; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .gallery { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+    .main-img { width: 100%; max-height: 600px; object-fit: cover; border-radius: 8px; }
+    .thumbs { display: flex; gap: 10px; }
+    .thumbs img { width: 80px; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent; }
+    .thumbs img.active { border-color: #6366f1; }
+    .details { flex: 1; }
+    .brand { font-size: 14px; text-transform: uppercase; color: #6366f1; font-weight: 600; letter-spacing: 1px; }
+    h1 { font-size: 32px; margin: 8px 0; }
+    .price { font-size: 24px; font-weight: 700; color: #111; margin: 16px 0; }
+    .description { color: #555; line-height: 1.6; margin-bottom: 24px; }
+    .add-to-cart { background: #111; color: #fff; border: none; padding: 14px 28px; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer; width: 100%; transition: background 0.2s; }
+    .add-to-cart:hover { background: #333; }
+    .related-section { margin-top: 50px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+    .product-card { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #eee; display: flex; flex-direction: column; }
+    .product-card img { width: 100%; height: 260px; object-fit: cover; border-radius: 6px; }
+    .product-card h3 { font-size: 16px; margin: 10px 0 5px; }
+    .product-card .card-price { font-weight: 700; color: #111; }
+    .btn-inject { margin-top: 20px; padding: 10px 18px; background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>AURA ATELIER</h2>
+    <nav><span>Cart (0)</span></nav>
+  </div>
+
+  <div class="pdp-container">
+    <div class="gallery">
+      <img id="mainProductImage" class="main-img" src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&q=80" alt="Silk Evening Gown Front View" />
+      <div class="thumbs">
+        <img class="active" src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=1200&q=80" alt="Gown Front" onclick="document.getElementById('mainProductImage').src=this.src" />
+        <img src="https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=1200&q=80" alt="Gown Back View" onclick="document.getElementById('mainProductImage').src=this.src" />
+      </div>
+    </div>
+    <div class="details">
+      <div class="brand">Aura Atelier</div>
+      <h1 id="productTitle">Aura Silk Evening Gown</h1>
+      <div class="price">$280.00</div>
+      <p class="description">100% Mulberry silk sleeveless evening gown in emerald green. Features a draped neckline and concealed back zipper.</p>
+      <button class="add-to-cart add-to-cart-btn">Add to Bag</button>
+    </div>
+  </div>
+
+  <div class="related-section">
+    <h3>Recommended Styles</h3>
+    <button class="btn-inject" id="injectBtn" onclick="injectDynamicProduct()">+ Dynamically Load New Arrival (SPA Simulation)</button>
+    <div class="grid" id="productGrid">
+      <div class="product-card">
+        <a href="/products/linen-shirt">
+          <img src="https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&q=80" alt="Tailored Linen Shirt" />
+          <h3>Tailored Linen Shirt</h3>
+        </a>
+        <div class="card-price">$85.00</div>
+      </div>
+      <div class="product-card">
+        <a href="/products/chelsea-boots">
+          <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80" alt="Retro Running Shoes" />
+          <h3>Retro Running Shoes</h3>
+        </a>
+        <div class="card-price">$120.00</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function injectDynamicProduct() {
+      const grid = document.getElementById('productGrid');
+      const newCard = document.createElement('div');
+      newCard.className = 'product-card';
+      newCard.innerHTML = `
+        <a href="/products/wool-trousers">
+          <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80" alt="Pleated Wool Trousers" />
+          <h3>Pleated Wool Trousers</h3>
+        </a>
+        <div class="card-price">$145.00</div>
+      `;
+      grid.appendChild(newCard);
+    }
+  </script>
+</body>
+</html>

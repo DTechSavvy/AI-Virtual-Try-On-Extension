@@ -7,5 +7,6 @@
     "moduleResolution": "NodeNext"
   },
   "include": ["src/**/*"],
+  "exclude": ["src/tests/**/*"],
   "references": [{ "path": "../shared" }]
 }

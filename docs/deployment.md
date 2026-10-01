@@ -121,3 +121,34 @@ A GitHub Actions pipeline (`.github/workflows/ci.yml`) executes on every commit 
 3. **Unit Tests:** Jest / Vitest unit tests verifying product detection heuristics, normalization logic, and category mapping.
 4. **Integration Tests:** Dockerized PostgreSQL and Redis spin up in CI to test API endpoints and BullMQ job worker flow with `MockTryOnProvider`.
 5. **Extension Build Validation:** Manifest schema linting and bundle size budget checks.
+
+---
+
+## 6. Standalone Worker & Production Environment Variables
+
+### 6.1 Worker Process Command
+In production, the compute worker runs separately from the Express HTTP API server:
+```bash
+# Start HTTP API service
+npm run start
+
+# Start standalone BullMQ AI Try-On worker
+npm run worker
+```
+
+### 6.2 Key Environment Configuration Matrix
+
+| Variable | Description | Required | Example |
+|---|---|---|---|
+| `PORT` | HTTP API server listening port | Yes | `4000` |
+| `DATABASE_URL` | PostgreSQL connection string | Yes | `postgresql://vton:vton_secret@localhost:5432/vton_db` |
+| `REDIS_HOST` | Redis host for caching and BullMQ | Yes | `localhost` |
+| `REDIS_PORT` | Redis port | Yes | `6379` |
+| `S3_ENDPOINT` | Private object storage endpoint | Yes | `http://localhost:9000` (MinIO) or AWS S3 |
+| `S3_BUCKET_NAME` | S3 bucket name | Yes | `vton-private` |
+| `AI_PROVIDER` | Active Virtual Try-On Provider (`MOCK`, `FASHN`, `REPLICATE`) | Yes | `MOCK` (CI/Dev) or `FASHN` (Prod) |
+| `FASHN_API_KEY` | FASHN.ai API key (if `AI_PROVIDER=FASHN`) | Conditional | `fa_live_...` |
+| `REPLICATE_API_TOKEN` | Replicate API token (if `AI_PROVIDER=REPLICATE`) | Conditional | `r8_...` |
+| `BULLMQ_QUEUE_NAME` | Redis BullMQ queue name | Optional | `try-on-jobs` |
+| `WORKER_CONCURRENCY`| Number of concurrent jobs per worker instance | Optional | `2` |
+

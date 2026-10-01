@@ -25,6 +25,11 @@ data/
 *.sqlite
 *.sqlite3
 minio-data/
+.dev-storage/
+scratch/*.png
+scratch/*.webp
+scratch/*.jpg
+scratch/*.jpeg
 
 # Logs
 logs/

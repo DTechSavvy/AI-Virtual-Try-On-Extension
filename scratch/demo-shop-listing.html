@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nordic Minimal — Summer Essentials Collection</title>
+  <meta property="og:site_name" content="Nordic Minimal" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Nordic Minimal — Summer Apparel & Outerwear" />
+  
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; background: #f4f4f5; color: #27272a; }
+    header { background: #18181b; color: #fff; padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: 2px; }
+    .catalog-wrapper { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+    .catalog-title { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+    .catalog-subtitle { color: #71717a; margin-bottom: 30px; }
+    .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+    .item-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .item-card:hover { transform: translateY(-4px); }
+    .item-img-wrapper { position: relative; height: 380px; overflow: hidden; background: #e4e4e7; }
+    .item-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+    .item-meta { padding: 20px; }
+    .item-category { font-size: 11px; text-transform: uppercase; color: #6366f1; font-weight: 700; letter-spacing: 1px; }
+    .item-name { font-size: 18px; font-weight: 600; margin: 6px 0; color: #09090b; }
+    .item-price { font-size: 16px; font-weight: 700; color: #18181b; }
+    .btn-quick-view { margin-top: 14px; width: 100%; padding: 10px; background: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 6px; font-weight: 600; cursor: pointer; }
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "Product",
+        "name": "Nordic Heavyweight Crewneck Sweatshirt",
+        "image": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&q=80",
+        "description": "Premium 450 GSM organic cotton crewneck sweatshirt in heather gray.",
+        "brand": { "@type": "Brand", "name": "Nordic Minimal" },
+        "offers": {
+          "@type": "Offer",
+          "price": "95.00",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "Product",
+        "name": "Relaxed Fit Utility Cargo Trousers",
+        "image": "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&q=80",
+        "description": "Durable cotton ripstop utility pants with adjustable ankle cuffs.",
+        "brand": { "@type": "Brand", "name": "Nordic Minimal" },
+        "offers": {
+          "@type": "Offer",
+          "price": "120.00",
+          "priceCurrency": "USD"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>NORDIC MINIMAL</h1>
+    <div>Search | Account | Bag (2)</div>
+  </header>
+
+  <div class="catalog-wrapper">
+    <div class="catalog-title">Men's Summer Wardrobe</div>
+    <div class="catalog-subtitle">Clean lines, sustainable textiles, and timeless silhouettes.</div>
+
+    <div class="products-grid">
+      <!-- Item 1: TOPS -->
+      <div class="item-card" data-product-sku="NM-TOP-01">
+        <div class="item-img-wrapper">
+          <img src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&q=80" alt="Nordic Heavyweight Crewneck Sweatshirt" />
+        </div>
+        <div class="item-meta">
+          <div class="item-category">Sweatshirts & Tops</div>
+          <div class="item-name">Nordic Heavyweight Crewneck Sweatshirt</div>
+          <div class="item-price">$95.00</div>
+          <button class="btn-quick-view">Quick View</button>
+        </div>
+      </div>
+
+      <!-- Item 2: PANTS -->
+      <div class="item-card" data-product-sku="NM-BOT-02">
+        <div class="item-img-wrapper">
+          <img src="https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&q=80" alt="Relaxed Fit Utility Cargo Trousers" />
+        </div>
+        <div class="item-meta">
+          <div class="item-category">Pants & Bottoms</div>
+          <div class="item-name">Relaxed Fit Utility Cargo Trousers</div>
+          <div class="item-price">$120.00</div>
+          <button class="btn-quick-view">Quick View</button>
+        </div>
+      </div>
+
+      <!-- Item 3: JACKETS -->
+      <div class="item-card" data-product-sku="NM-OUT-03">
+        <div class="item-img-wrapper">
+          <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80" alt="Minimalist Technical Windbreaker Jacket" />
+        </div>
+        <div class="item-meta">
+          <div class="item-category">Jackets & Outerwear</div>
+          <div class="item-name">Minimalist Technical Windbreaker Jacket</div>
+          <div class="item-price">$165.00</div>
+          <button class="btn-quick-view">Quick View</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

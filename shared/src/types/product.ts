@@ -39,6 +39,8 @@ export interface NormalizedProduct {
   selectedImageId: string;
   variants: ProductVariant[];
   selectedVariantId?: string;
+  isPrimary?: boolean;
+  pageType?: 'PDP' | 'PLP' | 'UNKNOWN';
   detectionConfidence: number;
   metadata: Record<string, unknown>;
   extractedAt: string;

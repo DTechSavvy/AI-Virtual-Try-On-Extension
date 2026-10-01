@@ -89,15 +89,28 @@ graph TD
 - **Message Router:** Dispatches actions between Content Scripts and the Side Panel (e.g. `DETECT_PRODUCTS`, `GET_CURRENT_TAB_PRODUCTS`, `PING`).
 - **Token & Caching Layer:** Proxies authentication refresh events and synchronizes cached state across browser windows.
 
-### 3.3 Side Panel UI (`sidepanel/`)
-- **Technology:** React 19 + TypeScript + Vite + Tailwind CSS design system.
-- **Primary Views:**
-  1. **Profile Setup & Management:** Guidance modal with pose instructions; image dropzones for Full-body, Upper-body, Lower-body, Feet, and Face photographs; upload progress and server validation feedback.
-  2. **Product Feed:** Displays candidate products discovered on the active tab; handles single product detail pages (PDP) as well as multi-product catalog/listing pages (PLP); allows switching between discovered products.
-  3. **Product Inspector & Variant Picker:** Allows selecting alternate angles (e.g. front view vs back view) or color variants; category selector with auto-detected badge and manual override dropdown.
-  4. **Try-On Action Bar:** Mode selector (`FAST`, `STANDARD`, `HIGH_QUALITY`, `CONTEXT_AWARE`); one-click "Try On" trigger.
-  5. **Job Progress Monitor:** Visual progress stepper reflecting real-time backend state (`QUEUED` $\rightarrow$ `PROCESSING` $\rightarrow$ `COMPLETED`).
-  6. **Result Gallery & Wardrobe:** High-definition image preview, split before/after comparison slider, download action, and save to virtual wardrobe.
+### 3.3 Side Panel UI Architecture (`extension/src/sidepanel/`)
+- **Technology:** React 19 + TypeScript + Vite + Custom Glassmorphism CSS Design System.
+- **Component Breakdown:**
+  1. **`App.tsx`:** Primary orchestrator managing application state:
+     - Authentication state (`user`, `tokens`, `authLoading`).
+     - Product discovery state (`detectedProducts`, `selectedProduct`).
+     - Profile state (`profile`, `isProfileReadyForCategory`).
+     - Active try-on job state (`activeJob`, `jobPollingInterval`).
+     - Wardrobe history drawer state (`showHistory`).
+  2. **`components/AuthModal.tsx`:** In-panel authentication modal supporting both sign-in and registration with instant feedback and training consent toggle.
+  3. **`components/ProductInspector.tsx`:** Detailed view for the selected garment with thumbnail gallery, category override badge, generation mode selection (`FAST`, `STANDARD`, `HIGH_QUALITY`), and a dynamic Try On CTA indicating profile readiness or missing assets.
+  4. **`components/JobProgress.tsx`:** Real-time 4-stage generation stepper (`QUEUED` $\rightarrow$ `PREPARING_ASSETS` $\rightarrow$ `AI_SYNTHESIS` $\rightarrow$ `STORING_RESULT`), animated progress bar, safe error messaging, and retry triggers.
+  5. **`components/ResultViewer.tsx`:** Interactive presentation of the synthesized try-on:
+     - Before/After split comparison toggle (original model/garment vs. virtual try-on on user).
+     - Full-screen lightbox zoom view.
+     - "Save Look to Wardrobe" action.
+     - "Try On Another Product" action, resetting product state while keeping profile state intact.
+  6. **`components/HistoryView.tsx`:** Wardrobe drawer showing paginated history of all past virtual try-on looks, individual image preview modals, and one-click deletion.
+  7. **`api/api-client.ts`:** Centralized client managing network requests:
+     - Persists access and refresh tokens securely in `chrome.storage.local`.
+     - Automatically handles token expiration with automatic refresh rotation on HTTP 401.
+     - Maps backend RFC 7807 problem details into user-friendly UI error notifications.
 
 ---
 

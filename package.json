@@ -18,7 +18,8 @@
     "docker:logs": "docker compose -f infrastructure/docker-compose.yml logs -f"
   },
   "devDependencies": {
-    "typescript": "^5.8.2",
-    "prettier": "^3.5.3"
+    "happy-dom": "^20.14.5",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
   }
 }

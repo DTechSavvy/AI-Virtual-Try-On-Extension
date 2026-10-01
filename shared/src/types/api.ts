@@ -23,12 +23,18 @@ export interface AuthResponse {
 }
 
 export interface CreateTryOnJobRequest {
-  profileId: string;
+  profileId?: string;
   productId?: string;
   selectedImageUrl: string;
   category: ProductCategory;
   generationMode: GenerationMode;
   contextEnvironment?: string;
+  productTitle?: string;
+  sourceUrl?: string;
+  sourceDomain?: string;
+  price?: number;
+  currency?: string;
+  brand?: string;
 }
 
 export interface CreateTryOnJobResponse {

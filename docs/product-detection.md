@@ -67,74 +67,119 @@ graph TD
 
 ## 3. Signal Harvesters & Heuristics
 
-### 3.1 Structured Data Harvester (`JSON-LD` & `Microdata`)
+### 3.1 Structured Data Harvester (`JsonLdExtractor`)
+- Implemented in `extension/src/content/extractors/jsonld-extractor.ts`.
 - Queries all `<script type="application/ld+json">` elements.
-- Parses objects matching `@type: "Product"`, `@type: "IndividualProduct"`, or nested product offers.
-- Extracts high-confidence fields: `name`, `description`, `image` (handles arrays or strings), `offers.price`, `offers.priceCurrency`, `brand.name`, `category`.
-- Confidence contribution: $+0.45$.
+- Recursively parses root objects and nested `@graph` collections matching `@type: "Product"`, `@type: "IndividualProduct"`.
+- Extracts high-confidence fields: `title`, `description`, `images` (normalizes single strings and arrays), `price`, `currency`, `brand`, `sku`, `url`.
+- Confidence contribution: $+0.50$ (weight `jsonLd`).
 
-### 3.2 OpenGraph & Semantic Metadata Harvester
-- Extracts `<meta property="og:title">`, `<meta property="og:image">`, `<meta property="og:image:secure_url">`.
-- Inspects e-commerce meta tags: `<meta property="product:price:amount">`, `<meta property="product:price:currency">`.
-- Extracts Twitter card imagery: `<meta name="twitter:image">`.
-- Confidence contribution: $+0.25$.
+### 3.2 OpenGraph & Semantic Metadata Harvester (`MetadataExtractor`)
+- Implemented in `extension/src/content/extractors/metadata-extractor.ts`.
+- Extracts `<meta property="og:title">`, `<meta property="og:description">`, `<meta property="og:image">`, `<meta property="og:image:secure_url">`.
+- Inspects e-commerce price meta tags: `<meta property="product:price:amount">`, `<meta property="product:price:currency">`.
+- Inspects Twitter cards (`twitter:image`, `twitter:title`) and canonical link tags (`link[rel="canonical"]`).
+- Confidence contribution: $+0.20$ (weight `openGraph`).
 
-### 3.3 Visual DOM & Image Tree Harvester
+### 3.3 Visual DOM & Image Tree Harvester (`ImageExtractor`)
+- Implemented in `extension/src/content/extractors/image-extractor.ts`.
 - Inspects `<img>`, `<picture>`, and background image elements.
-- Resolves high-resolution targets from attributes: `srcset`, `data-src`, `data-zoom-image`, `data-large`, `data-original`.
-- Strips CDN dynamic thumbnail transformation parameters (e.g. `._AC_SX450_.jpg` on Amazon $\rightarrow$ master image).
-- Calculates computed dimensions: rejects images with natural width or height $< 200\text{px}$ or extreme aspect ratios ($> 1:3$ or $> 3:1$).
-- Confidence contribution: $+0.20$.
+- Resolves high-resolution targets from attributes: `srcset`, `data-src`, `data-zoom-image`, `data-large-image`, `data-large`, `data-original`, `data-high-res`.
+- Strips CDN dynamic thumbnail transformation parameters:
+  - Amazon: `._AC_UL320_.jpg` / `._AC_SR250,250_.jpg` $\rightarrow$ `.jpg`
+  - Shopify: `_small.jpg` / `_medium.jpg` / `_480x480.png` $\rightarrow$ `.jpg` / `.png`
+  - Strips query string tracking parameters (`utm_*`, `ref_*`, `fbclid`, `gclid`).
+- Classifies viewing angles (`FRONT`, `BACK`, `SIDE`, `DETAIL`, `FLAT_LAY`, `UNKNOWN`) via normalized word boundary detection.
+- Rejects noise elements (`isNonProductImage`): logos, icons, sprites, badges, avatars, social share links, 1x1 tracking pixels, and images with width or height $< 120\text{px}$.
+- Confidence contribution: $+0.10$ (weight `dimensions`).
 
-### 3.4 Contextual Text & Commerce Action Harvester
-- Locates prominent headings (`<h1>`, `<h2>`) within proximity to detected imagery.
-- Scans for standardized international currency formats: `$`, `€`, `£`, `₹`, `¥`, `USD`, `INR`, `EUR`.
-- Identifies e-commerce action markers: "Add to Cart", "Buy Now", "Add to Bag", "Out of Stock".
-- Confidence contribution: $+0.10$.
+### 3.4 Bounded DOM Context Harvester (`DomContextExtractor`)
+- Implemented in `extension/src/content/extractors/dom-context-extractor.ts`.
+- Ascends up to 6 levels of parent DOM hierarchy around image candidates.
+- Searches for nearby product titles (`<h1>`, `<h2>`, `<h3>`, `.title`, `.product-name`).
+- Extracts international prices via regex matching: `$`, `€`, `£`, `₹`, `¥`, `USD`, `EUR`, `GBP`, `INR`.
+- Discovers nearest product hyperlinks and Add-to-Bag / Add-to-Cart action buttons.
+
+### 3.5 Repeated Card Harvester (`ProductCardExtractor`)
+- Implemented in `extension/src/content/extractors/product-card-extractor.ts`.
+- Identifies product catalog listing cards on search/category pages using generic semantic and class selectors (`article`, `li[class*="product"]`, `div[class*="product-card"]`, `.grid-item`, etc.).
+- Extracts candidate thumbnail, title, price, and product page link for each item.
+- Confidence contribution: $+0.15$ (weight `cardStructure`).
 
 ---
 
 ## 4. Candidate Scoring & Filtering Engine
 
-Each extracted candidate accumulates a confidence score $S \in [0.0, 1.0]$:
+Implemented in `extension/src/content/scorer/candidate-scorer.ts`. Each extracted raw candidate accumulates a confidence score $S \in [0.0, 1.0]$ based on configurable constants:
 
-$$S = w_{json} S_{json} + w_{og} S_{og} + w_{dom} S_{dom} + w_{text} S_{text}$$
+```typescript
+export const DEFAULT_SCORING_WEIGHTS: ScoringWeights = {
+  jsonLd: 0.5,
+  openGraph: 0.2,
+  cardStructure: 0.15,
+  fashionKeywords: 0.15,
+  price: 0.1,
+  addToCart: 0.1,
+  dimensions: 0.1,
+};
 
-- **High-Confidence Threshold ($S \ge 0.65$):** Directly promoted to candidate list.
-- **Noise Rejection:** Images matching known banner/tracking patterns (e.g., `sprite`, `logo`, `banner`, `badge`, `icon`, `advertisement`, `rating`, `payment`) are penalized ($S = 0$) and discarded.
-- **Deduplication:** Multiple candidate images belonging to the same product group are clustered by DOM parent hierarchy (e.g., closest `.product-card`, `.grid-item`, or `article` element).
+export const MIN_CONFIDENCE_THRESHOLD = 0.45;
+```
 
----
-
-## 5. Automatic Product Category Detection
-
-The category engine maps product titles, breadcrumbs, and descriptions against a hierarchical fashion taxonomy:
-
-| Category | Typical Keywords & Detection Regex | Anatomical Try-On Target |
-|---|---|---|
-| **T-shirts & Tops** | `t-shirt`, `tee`, `top`, `blouse`, `tank`, `crop top`, `camisole`, `polo` | Upper Body |
-| **Shirts** | `shirt`, `button-down`, `oxford`, `flannel`, `formal shirt` | Upper Body |
-| **Dresses** | `dress`, `gown`, `frock`, `maxi`, `midi dress`, `jumpsuit`, `romper` | Full Body |
-| **Jackets & Outerwear** | `jacket`, `blazer`, `coat`, `hoodie`, `cardigan`, `sweater`, `parka` | Upper Body |
-| **Pants & Trousers** | `pants`, `trousers`, `jeans`, `denim`, `chinos`, `shorts`, `leggings` | Lower Body |
-| **Shoes & Footwear** | `shoes`, `sneakers`, `boots`, `heels`, `loafers`, `sandals`, `flats` | Feet |
-| **Jewellery & Necklaces**| `necklace`, `pendant`, `choker`, `chain`, `jewellery`, `earrings` | Face / Neck |
-| **Accessories** | `scarf`, `belt`, `hat`, `cap`, `sunglasses`, `watch`, `bag` | Contextual Anchor |
+- **Calculation:** $S = \text{clamp}_{0.0}^{1.0}\left( \sum w_i S_i - S_{\text{negative}} \right)$.
+- **Negative Penalties:** Candidates matching noise tokens (logo, icon, avatar, tracking pixel) or lacking product context incur severe penalties up to $-1.0$.
+- **Thresholding:** Candidates below $0.45$ are eliminated to guarantee zero false positives on non-shopping pages (verified by tests).
 
 ---
 
-## 6. Multiple Product Images & Variant Selection
+## 5. Candidate Deduplication & Image View Aggregation
 
-Section 10 of the assignment mandates selecting the best input image when multiple are present:
-1. **Front-Facing Model vs Flat-Lay:** AI models perform best when given a clear front-facing garment view. Images containing tokens like `front`, `model`, `lookbook`, `main` are scored higher than `back`, `side`, `detail`, `swatch`.
-2. **Resolution Ranking:** Candidates with highest resolution and least background noise are prioritized.
-3. **User Selection:** The extension UI presents an interactive thumbnail reel of all discovered product angles and color swatches, allowing the user to override and select the exact view to try on.
+Implemented in `extension/src/content/deduplicator/candidate-deduplicator.ts`:
+1. **Clustering:** Groups candidates by canonical URL pathname, normalized product title, or SKU.
+2. **Leader Selection:** Selects highest-confidence candidate as the cluster leader.
+3. **Multi-Image View Aggregation:** Merges all unique image URLs across the cluster, filters out duplicates, and ranks images:
+   - Front view / model photo: $+0.35$ boost
+   - Flat-lay: $+0.20$ boost
+   - Hero/main keyword in URL: $+0.15$ boost
+   - High resolution ($\ge 600\text{px}$): $+0.20$ boost
+   - Detail/macro crop: $-0.15$ penalty
+4. **Primary Image Selection:** Designates the highest-scoring front-facing image as `selectedImageId` while retaining all alternate views for user selection in the Side Panel UI.
 
 ---
 
-## 7. Website Adapter Extensibility
+## 6. Automatic Product Category Detection
 
-While generic extraction handles over 85% of standard e-commerce pages, specific high-traffic sites (e.g. Amazon, Zara, Myntra) use heavily obfuscated DOM structures. The architecture includes an **Adapter Registry**:
-- If a registered adapter matches the active hostname (`*.amazon.*`, `*.zara.*`, `*.myntra.*`), its domain-specific selectors run first.
-- If the adapter fails or is not present, the generic extraction pipeline executes transparently as the primary fallback.
-- This ensures maximum cross-site compatibility without brittle coupling.
+Implemented in `extension/src/content/classifier/category-classifier.ts`. Maps extracted titles, descriptions, and breadcrumbs to `@vton/shared` `ProductCategory`:
+
+| Category | Regex Patterns | Anatomical Region | Required Profile Photo |
+|---|---|---|---|
+| **TOPS** | `t-shirt`, `tshirt`, `tee`, `tank`, `crop top`, `camisole`, `top`, `tunic` | Upper Body | `UPPER_BODY` |
+| **SHIRTS** | `shirt`, `button-down`, `oxford`, `flannel`, `blouse`, `polo`, `formal shirt` | Upper Body | `UPPER_BODY` |
+| **DRESSES** | `dress` (excl. belt/shirt), `gown`, `frock`, `maxi`, `midi`, `jumpsuit`, `romper` | Full Body | `FRONT_FULL_BODY` |
+| **JACKETS** | `jacket`, `blazer`, `coat`, `hoodie`, `cardigan`, `sweater`, `parka`, `trench` | Upper Body | `UPPER_BODY` |
+| **PANTS** | `pant`, `trousers`, `jeans`, `denim`, `chinos`, `shorts`, `leggings`, `joggers` | Lower Body | `LOWER_BODY` |
+| **SHOES** | `shoe`, `sneaker`, `boot`, `heel`, `loafer`, `sandal`, `flats`, `footwear` | Feet | `FEET` |
+| **JEWELLERY** | `jewellery`, `jewelry`, `earring`, `ring`, `bracelet`, `bangle`, `brooch` | Face / Neck | `FACE` |
+| **NECKLACES** | `necklace`, `pendant`, `choker`, `chain`, `locket` | Face / Neck | `FACE` |
+| **ACCESSORIES** | `scarf`, `belt`, `hat`, `cap`, `beanie`, `bag`, `handbag`, `tote`, `sunglasses` | Contextual | `FRONT_FULL_BODY` |
+| **CUSTOM** | Fallback for non-fashion or unknown items ($Conf \le 0.20$) | Custom | `FRONT_FULL_BODY` |
+
+---
+
+## 7. Dynamic Content & SPA Mutation Handling
+
+Implemented in `extension/src/content/scanner/mutation-observer.ts`:
+- **`DynamicContentObserver`:** Observes DOM subtree additions with a **600ms debounce** to avoid CPU thrashing during DOM hydration.
+- **Node Filtering:** Ignores trivial mutations (scripts, styles, SVGs); only reacts to `img`, `picture`, `article`, `div`.
+- **Fingerprint Checking:** Computes a lightweight fingerprint (`count:imageUrls`) and only dispatches `PRODUCT_DETECTION_RESULT` when actual new candidates are found.
+
+---
+
+## 8. Website Adapters & Generic Primary Engine
+
+Implemented in `extension/src/content/adapters/`:
+- **`GenericAdapter`:** Universal primary engine executed on all sites; uses JSON-LD, OpenGraph, DOM context, and product card heuristics.
+- **`AmazonAdapter`:** High-traffic PDP & PLP adapter extracting dynamic image JSON (`data-a-dynamic-image`) and `#corePrice_feature_div`.
+- **`ZaraAdapter`:** High-fashion SPA adapter targeting `.product-detail-view__main-content` and `.product-grid-product`.
+- **`AdapterRegistry`:** Evaluates adapters in sequence; generic adapter always provides full fallback.
+

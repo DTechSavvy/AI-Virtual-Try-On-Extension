@@ -81,3 +81,19 @@ Because AI image synthesis requires 4 to 20 seconds depending on provider worklo
 ```
 
 - If an AI provider fails or experiences rate limits, the worker automatically re-routes to an alternate provider or triggers backoff retries, alerting the user via the progress monitor: *"AI provider busy, optimizing rendering pipeline..."*
+
+---
+
+## 6. Job Idempotency & Efficient Polling
+
+### 6.1 Duplicate Job Prevention
+- Submitting a try-on computes an idempotency key based on `userId`, `productId`, `garmentImageUrl`, and `generationMode`.
+- If an existing active job (`QUEUED` or `PROCESSING`) exists with matching parameters, the existing `jobId` is returned immediately rather than generating redundant queue jobs and invoking costly AI provider calls.
+
+### 6.2 Adaptive Client-Side Polling
+- The Chrome Extension polls `GET /try-on/jobs/:id` using adaptive timing:
+  - Initial poll starts at 1.5 seconds.
+  - Polling interval dynamically slows to 3 seconds after 10 seconds of processing.
+  - Immediate termination upon encountering `COMPLETED` or `FAILED` states.
+  - Automatic cleanup of polling timers when unmounting or navigating away from the try-on tab.
+

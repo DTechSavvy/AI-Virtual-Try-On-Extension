@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "test": "echo Shared types verified",
     "clean": "rimraf dist"
   },
   "devDependencies": {

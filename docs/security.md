@@ -90,3 +90,26 @@ graph TD
 - **Model Training Opt-In:**
   - Database stores `consent_training: BOOLEAN DEFAULT FALSE`.
   - Default is strictly opt-out. AI payloads instruct providers that data is confidential and transient.
+
+---
+
+## 6. Server-Side Request Forgery (SSRF) Protection
+
+When users select garments on e-commerce sites, the Chrome Extension transmits the garment image URL to the backend. Because arbitrary URLs supplied by clients represent a major SSRF attack vector, the backend enforces defense-in-depth protections prior to any outbound network request:
+
+### 6.1 `SSRFValidator` (`backend/src/modules/try-on/services/ssrf.validator.ts`)
+- **Protocol Enforcement:** Only `http:` and `https:` protocols are permitted (`file:`, `gopher:`, `ftp:`, `data:` are rejected immediately).
+- **DNS Resolution Check:** Resolves domain names to IP addresses via `dns.promises.lookup()`.
+- **IP Range Filtering:** Blocks resolution to all dangerous and private network ranges:
+  - Loopback (`127.0.0.0/8`, `::1`)
+  - RFC 1918 Private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`)
+  - Link-local and cloud metadata addresses (`169.254.0.0/16`)
+  - IPv6 Unique Local Addresses (`fc00::/7`)
+  - Unspecified / Broadcast (`0.0.0.0/8`)
+
+### 6.2 `GarmentFetcherService` (`backend/src/modules/try-on/services/garment-fetcher.service.ts`)
+- **Strict Size Bounds:** Downloads are capped at 15MB with immediate abortion if `Content-Length` or streamed chunk size exceeds the limit.
+- **Strict Timeouts:** Outbound requests are governed by an `AbortSignal` with a strict 10-second timeout.
+- **Magic-Byte Inspection:** Validates binary headers using `file-type` to verify that downloaded payloads are authentic WebP, PNG, or JPEG image files.
+- **SHA-256 Storage Deduplication:** Garment images are hashed with SHA-256 and cached in private storage (`garments/{hash}.webp`), preventing redundant scraping and outbound network calls for commonly browsed items.
+
